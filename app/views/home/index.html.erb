@@ -1,0 +1,51 @@
+<div class="flex flex-col md:flex-row min-h-screen">
+  <!-- Left Rail - Journal List -->
+  <div class="w-full md:w-1/4 bg-gray-100 p-4 overflow-y-auto border-r border-gray-200">
+    <h2 class="text-xl font-bold mb-4">Journal Entries</h2>
+    <div class="mb-4">
+      <%= link_to "New Entry", new_journal_entry_path, class: "w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded text-center block" %>
+    </div>
+    <div id="entries-list">
+      <% JournalEntry.order(created_at: :desc).each do |entry| %>
+        <div class="mb-2 p-3 bg-white rounded shadow hover:shadow-md">
+          <%= link_to journal_entry_path(entry) do %>
+            <h3 class="font-semibold"><%= entry.title %></h3>
+            <p class="text-sm text-gray-600"><%= entry.created_at.strftime("%B %d, %Y") %></p>
+            <p class="text-sm text-gray-700 truncate"><%= entry.content.truncate(100) %></p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Main Area - Writing Space -->
+  <div class="w-full md:w-2/4 p-6 overflow-y-auto">
+    <div class="max-w-3xl mx-auto">
+      <h1 class="text-3xl font-bold mb-6">Momentum Journal</h1>
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <p class="mb-4">Welcome to your Momentum Journal, a place to write freely with gentle AI assistance.</p>
+        <p class="mb-4">To get started, create a new journal entry or select an existing one from the list.</p>
+        <div class="mt-8">
+          <%= link_to "Start Writing", new_journal_entry_path, class: "bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg text-lg" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Rail - AI Assistant -->
+  <div class="w-full md:w-1/4 bg-gray-50 p-4 overflow-y-auto border-l border-gray-200">
+    <h2 class="text-xl font-bold mb-4">AI Assistant</h2>
+    <div class="bg-white rounded-lg shadow p-4">
+      <p class="text-gray-700 mb-3">I'm here to help maintain your writing momentum. Start writing, and I'll offer gentle prompts when you need them.</p>
+      <div id="ai-response" class="mt-4 p-4 bg-blue-50 rounded-lg">
+        <p class="italic text-gray-600">What would you like to write about today?</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% content_for :scripts do %>
+<script>
+  // We'll add JavaScript for real-time AI interactions here in a future phase
+</script>
+<% end %>

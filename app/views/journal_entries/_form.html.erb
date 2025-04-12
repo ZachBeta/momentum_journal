@@ -1,0 +1,95 @@
+<%= form_with(model: journal_entry, class: "contents") do |form| %>
+  <% if journal_entry.errors.any? %>
+    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
+      <h2><%= pluralize(journal_entry.errors.count, "error") %> prohibited this journal_entry from being saved:</h2>
+
+      <ul class="list-disc ml-6">
+        <% journal_entry.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="my-5">
+    <%= form.label :title %>
+    <%= form.text_field :title, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": journal_entry.errors[:title].none?, "border-red-400 focus:outline-red-600": journal_entry.errors[:title].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <div class="flex justify-between items-center">
+      <%= form.label :content, "Content (Markdown supported)" %>
+      <div class="inline-flex">
+        <button type="button" id="edit-tab" class="px-4 py-2 bg-blue-600 text-white rounded-l-md">Edit</button>
+        <button type="button" id="preview-tab" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-r-md">Preview</button>
+      </div>
+    </div>
+    
+    <div id="edit-content" class="mt-2">
+      <%= form.text_area :content, rows: 15, class: ["block shadow-sm rounded-md border px-3 py-2 w-full font-mono", {"border-gray-400 focus:outline-blue-600": journal_entry.errors[:content].none?, "border-red-400 focus:outline-red-600": journal_entry.errors[:content].any?}] %>
+    </div>
+    
+    <div id="preview-content" class="hidden mt-2 p-4 border rounded-md min-h-[200px] prose">
+      <!-- Preview content will be displayed here -->
+    </div>
+  </div>
+
+  <div class="inline">
+    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  </div>
+<% end %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const editTab = document.getElementById('edit-tab');
+    const previewTab = document.getElementById('preview-tab');
+    const editContent = document.getElementById('edit-content');
+    const previewContent = document.getElementById('preview-content');
+    const contentTextarea = document.querySelector('textarea[name="journal_entry[content]"]');
+    
+    // Function to update preview content
+    function updatePreview() {
+      const markdownContent = contentTextarea.value;
+      
+      // Send content to server for markdown rendering
+      fetch('/ai_assistant/prompt?content=' + encodeURIComponent(markdownContent), {
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.prompt) {
+          // For now, we'll just display the content in the preview
+          // In a future phase, we'll add proper markdown rendering
+          previewContent.innerHTML = '<p>' + markdownContent.replace(/\n/g, '<br>') + '</p>';
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }
+    
+    // Switch between edit and preview tabs
+    editTab.addEventListener('click', function() {
+      editTab.classList.remove('bg-gray-200', 'text-gray-700');
+      editTab.classList.add('bg-blue-600', 'text-white');
+      previewTab.classList.remove('bg-blue-600', 'text-white');
+      previewTab.classList.add('bg-gray-200', 'text-gray-700');
+      editContent.classList.remove('hidden');
+      previewContent.classList.add('hidden');
+    });
+    
+    previewTab.addEventListener('click', function() {
+      previewTab.classList.remove('bg-gray-200', 'text-gray-700');
+      previewTab.classList.add('bg-blue-600', 'text-white');
+      editTab.classList.remove('bg-blue-600', 'text-white');
+      editTab.classList.add('bg-gray-200', 'text-gray-700');
+      previewContent.classList.remove('hidden');
+      editContent.classList.add('hidden');
+      updatePreview();
+    });
+    
+    // Auto-save functionality can be added here in a future phase
+  });
+</script>

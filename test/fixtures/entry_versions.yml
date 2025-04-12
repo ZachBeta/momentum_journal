@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  journal_entry: one
+  content: MyText
+  change_type: MyString
+  diff: MyText
+
+two:
+  journal_entry: two
+  content: MyText
+  change_type: MyString
+  diff: MyText
