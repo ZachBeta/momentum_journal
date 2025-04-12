@@ -174,4 +174,122 @@ export class HybridStorageManager {
       throw error;
     }
   }
+
+  async listEntries(): Promise<any[]> {
+    try {
+      const entries = this.db
+        .prepare(
+          `
+        SELECT 
+          je.id, 
+          je.file_path, 
+          je.created_at, 
+          je.updated_at,
+          SUBSTR(je.content, 1, 100) as content_preview,
+          em.word_count,
+          em.tags
+        FROM journal_entries je
+        LEFT JOIN entry_metadata em ON je.id = em.entry_id
+        ORDER BY je.updated_at DESC
+      `
+        )
+        .all();
+
+      return entries;
+    } catch (error) {
+      console.error('Error listing entries:', error);
+      throw error;
+    }
+  }
+
+  async searchEntries(query: string): Promise<any[]> {
+    try {
+      const searchTerm = `%${query}%`;
+      const entries = this.db
+        .prepare(
+          `
+        SELECT 
+          je.id, 
+          je.file_path, 
+          je.created_at, 
+          je.updated_at,
+          SUBSTR(je.content, 1, 100) as content_preview,
+          em.word_count,
+          em.tags
+        FROM journal_entries je
+        LEFT JOIN entry_metadata em ON je.id = em.entry_id
+        WHERE je.content LIKE ?
+        ORDER BY je.updated_at DESC
+      `
+        )
+        .all(searchTerm);
+
+      return entries;
+    } catch (error) {
+      console.error('Error searching entries:', error);
+      throw error;
+    }
+  }
+
+  extractTitle(content: string): string {
+    // Extract the first line as title, or use "Untitled" if empty
+    const firstLine = content.split('\n')[0].trim();
+    if (!firstLine) return 'Untitled';
+
+    // Remove markdown heading syntax
+    const title = firstLine.replace(/^#{1,6}\s+/, '');
+
+    // Limit to 50 characters
+    return title.length > 50 ? title.substring(0, 47) + '...' : title;
+  }
+
+  async getVersions(entryId: string): Promise<any[]> {
+    try {
+      const versions = this.db
+        .prepare(
+          `
+        SELECT * FROM entry_versions 
+        WHERE entry_id = ? 
+        ORDER BY timestamp DESC
+      `
+        )
+        .all(entryId);
+
+      return versions;
+    } catch (error) {
+      console.error('Error getting versions:', error);
+      throw error;
+    }
+  }
+
+  async getVersion(versionId: string): Promise<any> {
+    try {
+      const version = this.db
+        .prepare(
+          `
+        SELECT * FROM entry_versions WHERE id = ?
+      `
+        )
+        .get(versionId);
+
+      if (!version) {
+        throw new Error(`Version with id ${versionId} not found`);
+      }
+
+      return version;
+    } catch (error) {
+      console.error('Error getting version:', error);
+      throw error;
+    }
+  }
+
+  async restoreVersion(versionId: string): Promise<void> {
+    try {
+      const version = await this.getVersion(versionId);
+      await this.updateEntry(version.entry_id, version.content);
+    } catch (error) {
+      console.error('Error restoring version:', error);
+      throw error;
+    }
+  }
 }
